@@ -1,20 +1,25 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import cors from 'cors';
+import path from 'path';
 
-import { apolloExpress, graphiqlExpress } from 'apollo-server';
+import { graphqlExpress, graphiqlExpress } from 'graphql-server-express';
 import { makeExecutableSchema } from 'graphql-tools';
 
-import { schema, resolvers } from './schema';
+import { schema, resolvers } from './api/schema';
 
-const PORT = 4300;
+const PORT = 3000;
 const app = express();
 
-//app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
+// GraphQL
+
+const executableSchema = makeExecutableSchema({
+  typeDefs: schema,
+  resolvers,
+});
+
 app.use(bodyParser.json());
 
-app.use('/graphql', apolloExpress((req) => {
+app.use('/graphql', bodyParser.json(), graphqlExpress((req) => {
   // Get the query, the same way express-graphql does it
   // https://github.com/graphql/express-graphql/blob/3fa6e68582d6d933d37fa9e841da5d2aa39261cd/src/index.js#L257
   const query = req.query.query || req.body.query;
@@ -33,11 +38,20 @@ app.use('/graphiql', graphiqlExpress({
   endpointURL: '/graphql',
 }));
 
+// Static contents
+app.use(express.static(appRoot('dist/public')));
+
+app.get('*', (req, res) => {
+  res.sendFile(appRoot('src/index.html'));
+});
+
+// Server
+
 app.listen(PORT, () => console.log(
   `API Server is now running on http://localhost:${PORT}`
 ));
 
-const executableSchema = makeExecutableSchema({
-  typeDefs: schema,
-  resolvers,
-});
+
+function appRoot(relPath) {
+  return path.join(__dirname, relPath);
+}

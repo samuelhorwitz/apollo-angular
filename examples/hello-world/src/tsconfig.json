@@ -7,18 +7,19 @@
     "mapRoot": "./",
     "module": "es6",
     "moduleResolution": "node",
-    "outDir": "../dist/out-tsc",
+    "outDir": "../dist/app",
     "sourceMap": true,
     "target": "es5",
     "typeRoots": [
       "../node_modules/@types"
-    ],
-    "types": [
-      "node",
-      "isomorphic-fetch"
     ]
   },
-  "files": [
-    "main.ts"
-  ]
+  "exclude": [
+    "node_modules"
+  ],
+  "angularCompilerOptions": {
+    "genDir": "aot",
+    "skipMetadataEmit" : true,
+    "entryModule": "app/app.module#AppModule"
+  }
 }
