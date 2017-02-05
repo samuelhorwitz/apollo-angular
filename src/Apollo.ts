@@ -1,4 +1,4 @@
-import { Injectable, Provider } from '@angular/core';
+import { Injectable, Provider, SkipSelf, Optional } from '@angular/core';
 import { rxify } from 'apollo-client-rxjs';
 import { ApolloClient, ApolloQueryResult, WatchQueryOptions, MutationOptions, SubscriptionOptions } from 'apollo-client';
 import { Observable } from 'rxjs/Observable';
@@ -82,6 +82,15 @@ export function getClientMap(configWrapper: ClientMapWrapper): ClientMap {
   return config;
 }
 
+export function extendClientMap(clientMapWrapper: ClientMapWrapper, clientMap?: ClientMap | null): ClientMap {
+  if (clientMap) {
+    console.log('clientMap', clientMap);
+  } else {
+    console.log('clientMap', 'no');
+  }
+  return getClientMap(clientMapWrapper);
+}
+
 /**
  * Provides a value for a map and a wrapper
  */
@@ -93,6 +102,23 @@ export function provideClientMap(configWrapper: ClientMapWrapper | ClientWrapper
     provide: CLIENT_MAP,
     useFactory: getClientMap,
     deps: [CLIENT_MAP_WRAPPER],
+  }];
+}
+
+/**
+ * Provides an extended value for a map and a wrapper
+ */
+export function provideExtendedClientMap(configWrapper: ClientMapWrapper | ClientWrapper): Provider[] {
+  return [{
+    provide: CLIENT_MAP_WRAPPER,
+    useValue: configWrapper,
+  }, {
+    provide: CLIENT_MAP,
+    useFactory: extendClientMap,
+    deps: [
+      CLIENT_MAP_WRAPPER,
+      [new Optional(), new SkipSelf(), CLIENT_MAP],
+    ],
   }];
 }
 

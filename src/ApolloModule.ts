@@ -1,6 +1,6 @@
 import { NgModule, ModuleWithProviders, Provider } from '@angular/core';
 
-import { provideApollo, provideClientMap } from './Apollo';
+import { provideApollo, provideClientMap, provideExtendedClientMap } from './Apollo';
 import { SelectPipe } from './SelectPipe';
 import { ClientWrapper, ClientMapWrapper } from './types';
 
@@ -40,6 +40,19 @@ export class ApolloModule {
       providers: [
         APOLLO_PROVIDERS,
         provideClientMap(clientMapFn),
+      ],
+    };
+  }
+
+  /**
+   * Extends a map of ApolloClients or a single instance
+   */
+  public static forChild(clientMapFn: ClientMapWrapper | ClientWrapper): ModuleWithProviders {
+    return {
+      ngModule: ApolloModule,
+      providers: [
+        APOLLO_PROVIDERS,
+        provideExtendedClientMap(clientMapFn),
       ],
     };
   }
