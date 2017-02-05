@@ -2,6 +2,7 @@ import { ApolloClient } from 'apollo-client';
 
 import './_common';
 
+import { createInjector, createChildInjector } from './_helpers';
 import { ApolloModule, SelectPipe, Apollo } from '../src';
 import { CLIENT_MAP, CLIENT_MAP_WRAPPER } from '../src/tokens';
 
@@ -75,6 +76,67 @@ describe('ApolloModule', () => {
       expect(providers[1]['useFactory']).toBeDefined();
       expect(providers[1]['deps'][0]).toBe(CLIENT_MAP_WRAPPER);
       expect(factoryResult).toEqual({
+        default: defaultClient,
+        extra: extraClient,
+      });
+    });
+  });
+
+  describe('forChild', () => {
+    const defaultClient = {} as ApolloClient;
+    const extraClient = {} as ApolloClient;
+    const getClients = () => ({
+      default: defaultClient,
+      extra: extraClient,
+    });
+    const result = ApolloModule.forChild(getClients);
+    const providers = result.providers[1]; // skips APOLLO_PROVIDERS
+
+    it('should contain ApolloModule as ngModule', () => {
+      expect(result.ngModule === ApolloModule).toBe(true);
+    });
+
+    it('should provide a wrapper directly', () => {
+      expect(providers[0]['provide']).toBe(CLIENT_MAP_WRAPPER);
+      expect(providers[0]['useValue']).toBe(getClients);
+    });
+
+    it('should provide a value using factory', () => {
+      const factoryResult = providers[1]['useFactory'](getClients);
+
+      expect(providers[1]['provide']).toBe(CLIENT_MAP);
+      expect(providers[1]['useFactory']).toBeDefined();
+      expect(providers[1]['deps'][0]).toBe(CLIENT_MAP_WRAPPER);
+      expect(factoryResult).toEqual({
+        default: defaultClient,
+        extra: extraClient,
+      });
+    });
+  });
+
+  describe('Nested Apollo Modules', () => {
+    const defaultClient = {} as ApolloClient;
+    const extraClient = {} as ApolloClient;
+    const parentClients = () => ({
+      default: defaultClient,
+    });
+    const childClients = () => ({
+      extra: extraClient,
+    });
+    let parentMap: {};
+    let childMap: {};
+
+    beforeEach(() => {
+      const rootInjector = createInjector(ApolloModule.forRoot(parentClients));
+      const childInjector = createChildInjector(rootInjector, ApolloModule.forChild(childClients));
+
+      parentMap = rootInjector.get(CLIENT_MAP);
+      childMap = childInjector.get(CLIENT_MAP);
+    });
+
+    it(`should extend parent's map`, () => {
+      expect(parentMap).toEqual(parentClients());
+      expect(childMap).toEqual({
         default: defaultClient,
         extra: extraClient,
       });
